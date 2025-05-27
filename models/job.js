@@ -9,8 +9,12 @@ const jobSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
-  }, // Foreign key to User
-  companyImage: { type: String, required: false }, // Stores company reference image URL or file path
+  },
+  companyImage: {
+    type: String,
+    required: false,
+    match: /^https?:\/\/.*\.(jpeg|jpg|png|gif)$/i,
+  }, // Ensures valid image URL
   createdAt: { type: Date, default: Date.now },
 });
 
