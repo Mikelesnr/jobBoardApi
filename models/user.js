@@ -1,49 +1,15 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
+  name: { type: String, required: true, trim: true },
+  email: { type: String, required: true, unique: true, lowercase: true },
+  password: { type: String, required: true },
   userType: {
     type: String,
     required: true,
-    enum: ["admin", "employer", "applicant"], // Restricts allowed values
+    enum: ["admin", "employer", "applicant"],
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-
-  // Additional fields for employers
-  companyName: {
-    type: String,
-    required: function () {
-      return this.userType === "employer"; // Only required for employers
-    },
-  },
-
-  // Additional fields for applicants
-  resume: {
-    type: String, // Could store a file path or URL
-    required: function () {
-      return this.userType === "applicant"; // Only required for applicants
-    },
-  },
+  createdAt: { type: Date, default: Date.now },
 });
 
-// Create User model
-const User = mongoose.model("User", userSchema);
-
-module.exports = User;
+module.exports = mongoose.model("User", userSchema);

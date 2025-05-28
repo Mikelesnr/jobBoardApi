@@ -1,19 +1,28 @@
 require("dotenv").config();
 const swaggerAutogen = require("swagger-autogen")();
 
+/* ===========================
+ * 📌 SWAGGER CONFIGURATION
+ * =========================== */
 const doc = {
   info: {
-    title: "CSE-341 Contacts Project",
-    description: "API documentation for the contacts project",
+    title: "Job Listing API",
+    description: "API documentation for job postings and applications",
   },
-  host: process.env.SERVER_URL.replace(/^https?:\/\//, "") || "localhost:3000",
-  schemes: [process.env.PROTOCOL || "http"],
+  host: process.env.BASE_URL.replace(/^https?:\/\//, "") || "localhost:3000", // Dynamically set host from .env
+  schemes: [process.env.PROTOCOL || "http"], // Use protocol from .env or default to HTTP
 };
 
-const outputFile = "./swagger.json";
+/* ===========================
+ * 📌 SWAGGER OUTPUT & ROUTE FILES
+ * =========================== */
+const outputFile = "./swagger.json"; // File where Swagger JSON will be generated
 const endpointsFiles = ["../routes/index.js"];
 
+/* ===========================
+ * 🚀 GENERATE SWAGGER DOCUMENTATION
+ * =========================== */
 swaggerAutogen(outputFile, endpointsFiles, doc).then(() => {
   console.log("✅ Swagger documentation generated successfully!");
-  process.exit(); // Forces the script to exit after completion
+  process.exit(); // Ensures the script exits cleanly after completion
 });
