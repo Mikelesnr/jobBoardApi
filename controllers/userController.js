@@ -30,11 +30,13 @@ const createUser = async (req, res) => {
 };
 
 /* ===========================
- * USER LOGIN
+ * USER LOGIN (Anyone)
  * =========================== */
 const loginUser = async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.body.email });
+    const user = await User.findOne({ email: req.body.email }).select(
+      "+password"
+    ); // Ensure password is available for comparison
 
     if (!user) {
       return res.status(401).json({ error: "Invalid email or password" });
@@ -53,7 +55,13 @@ const loginUser = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.status(200).json({ message: "Login successful", token, user });
+    // ✅ Exclude password from the response
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
+    res
+      .status(200)
+      .json({ message: "Login successful", token, user: userResponse });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -78,21 +86,20 @@ const getAllUsers = async (req, res) => {
 };
 
 /* ===========================
- * GET USER BY ID (Admin or User Themselves)
+ * GET USER BY ID (Admin or Self)
  * =========================== */
 const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    // Extract userId from the token
+    const { userId, userType } = req.user;
 
-    // Allow admin or the user themselves to access the data
-    if (
-      !user ||
-      (req.user.userType !== "admin" &&
-        req.user._id.toString() !== user._id.toString())
-    ) {
-      return res
-        .status(403)
-        .json({ error: "Unauthorized: You can only view your own profile." });
+    // If requesting own profile, use token userId
+    const targetUserId = userType === "admin" ? req.params.id : userId;
+
+    const user = await User.findById(targetUserId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
     }
 
     res.status(200).json(user);
@@ -102,42 +109,55 @@ const getUserById = async (req, res) => {
 };
 
 /* ===========================
- * UPDATE USER (User or Admin)
+ * UPDATE USER PROFILE (Admin or Self)
  * =========================== */
 const updateUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    // Extract userId and userType from the token
+    const { userId, userType } = req.user;
 
-    // Allow admin or the user themselves to edit
+    console.log("Token userId:", userId, "Request userId:", req.params.id); // Debugging
+
+    // Ensure only admins or the user themselves can update their profile
     if (
-      !user ||
-      (req.user.userType !== "admin" &&
-        req.user._id.toString() !== user._id.toString())
+      userType !== "admin" &&
+      userId.toString() !== req.params.id.toString()
     ) {
-      return res
-        .status(403)
-        .json({ error: "Unauthorized: You can only edit your own profile." });
+      return res.status(403).json({
+        error: "Unauthorized: You can only edit your own account details.",
+      });
+    }
+
+    // Prevent non-admins from changing their `userType`
+    if (userType !== "admin" && req.body.userType) {
+      delete req.body.userType;
     }
 
     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-    });
+    }).select("-password"); // Exclude password from response
 
-    res.status(200).json(updatedUser);
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    res.status(200).json({
+      message: "User account updated successfully!",
+      user: updatedUser,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
 /* ===========================
- * DELETE USER (Admin Can Delete Any User, Users Can Delete Themselves)
+ * DELETE USER (Admin or Self)
  * =========================== */
 const deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
 
-    // Allow admin to delete any user or allow user to delete themselves
     if (
       !user ||
       (req.user.userType !== "admin" &&
@@ -148,12 +168,10 @@ const deleteUser = async (req, res) => {
         .json({ error: "Unauthorized: You can only delete your own profile." });
     }
 
-    // ✅ Cascade delete applications if user is an applicant
     if (user.userType === "applicant") {
       await Application.deleteMany({ applicantId: user._id });
     }
 
-    // ✅ Cascade delete job postings if user is an employer
     if (user.userType === "employer") {
       await Job.deleteMany({ employerId: user._id });
     }

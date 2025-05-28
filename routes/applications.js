@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const applicationController = require("../controllers/applicationController");
-console.log(applicationController.getJobApplications);
 
 const {
   authenticateUser,

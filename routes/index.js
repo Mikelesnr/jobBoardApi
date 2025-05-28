@@ -5,12 +5,24 @@ const jobRoutes = require("./jobs");
 const applicationRoutes = require("./applications");
 const welcomeController = require("../controllers/welcomeController");
 
-// Prefix routes to organize API structure
-router.use("/auth", authRoutes); // User-related routes
-router.use("/jobs", jobRoutes); // Job-related routes
-router.use("/applications", applicationRoutes); // Application-related routes
+/* ===========================
+ * USER ROUTES (Authentication & Profile Management)
+ * =========================== */
+router.use("/auth", authRoutes);
 
-// Welcome route
+/* ===========================
+ * JOB ROUTES (Job Listings & Management)
+ * =========================== */
+router.use("/jobs", jobRoutes);
+
+/* ===========================
+ * APPLICATION ROUTES (Job Applications & Tracking)
+ * =========================== */
+router.use("/applications", applicationRoutes);
+
+/* ===========================
+ * WELCOME ROUTE (Homepage)
+ * =========================== */
 router.get("/", welcomeController.showHomePage);
 
 module.exports = router;
