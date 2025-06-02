@@ -13,7 +13,6 @@ let database; // A variable to hold the database instance, if direct access is r
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.DB_URL);
-    console.log("MongoDB Connected 🚀");
     // Assigns the underlying MongoDB database object from the Mongoose connection.
     // This is useful if direct MongoDB driver methods are intended to be used.
     database = conn.connection.db;
