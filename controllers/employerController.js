@@ -7,7 +7,6 @@ const Application = require("../models/application");
  * =========================== */
 const createEmployerProfile = async (req, res) => {
   try {
-    // Extract userId and userType from the token
     const { userId, userType } = req.user;
 
     if (userType !== "employer") {
@@ -17,7 +16,7 @@ const createEmployerProfile = async (req, res) => {
     }
 
     const newEmployer = new Employer({
-      userId: userId, // Use userId from token
+      userId,
       companyName: req.body.companyName || "",
       jobListings: req.body.jobListings || [],
     });
@@ -28,7 +27,8 @@ const createEmployerProfile = async (req, res) => {
       employer: newEmployer,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error creating employer profile:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
@@ -38,11 +38,15 @@ const createEmployerProfile = async (req, res) => {
 const getEmployerProfile = async (req, res) => {
   try {
     const employer = await Employer.findOne({ userId: req.user._id });
-    if (!employer) return res.status(404).send("Employer profile not found");
+
+    if (!employer) {
+      return res.status(404).json({ error: "Employer profile not found." });
+    }
 
     res.status(200).json(employer);
   } catch (error) {
-    res.status(500).send("Error fetching employer profile: " + error.message);
+    console.error("Error fetching employer profile:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
@@ -52,14 +56,13 @@ const getEmployerProfile = async (req, res) => {
 const updateEmployerProfile = async (req, res) => {
   try {
     const employer = await Employer.findOne({ userId: req.user._id });
+
     if (!employer && req.user.userType !== "admin") {
       return res.status(404).json({
-        error:
-          "Employer profile not found or you do not have permission to edit it.",
+        error: "Employer profile not found or unauthorized.",
       });
     }
 
-    // Update profile fields like companyName and jobListings
     const updatedEmployer = await Employer.findOneAndUpdate(
       { userId: req.user._id },
       req.body,
@@ -71,7 +74,8 @@ const updateEmployerProfile = async (req, res) => {
       employer: updatedEmployer,
     });
   } catch (error) {
-    res.status(500).send("Error updating employer profile: " + error.message);
+    console.error("Error updating employer profile:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
@@ -88,9 +92,10 @@ const postJob = async (req, res) => {
     });
 
     await newJob.save();
-    res.status(201).send("Job posted successfully! 🚀");
+    res.status(201).json({ message: "Job posted successfully!", job: newJob });
   } catch (error) {
-    res.status(500).send("Error posting job: " + error.message);
+    console.error("Error posting job:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
@@ -102,9 +107,17 @@ const getJobApplications = async (req, res) => {
     const applications = await Application.find({
       jobId: req.params.jobId,
     }).populate("applicantId");
+
+    if (!applications.length) {
+      return res
+        .status(404)
+        .json({ error: "No applications found for this job." });
+    }
+
     res.status(200).json(applications);
   } catch (error) {
-    res.status(500).send("Error fetching applications: " + error.message);
+    console.error("Error fetching applications:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
@@ -114,13 +127,22 @@ const getJobApplications = async (req, res) => {
 const updateApplicationStatus = async (req, res) => {
   try {
     const application = await Application.findById(req.params.applicationId);
-    if (!application) return res.status(404).send("Application not found");
+
+    if (!application) {
+      return res.status(404).json({ error: "Application not found." });
+    }
 
     application.status = req.body.status;
     await application.save();
-    res.status(200).send("Application status updated successfully!");
+    res
+      .status(200)
+      .json({
+        message: "Application status updated successfully!",
+        application,
+      });
   } catch (error) {
-    res.status(500).send("Error updating application: " + error.message);
+    console.error("Error updating application status:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 

@@ -1,6 +1,8 @@
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken"); // For authentication
+const jwt = require("jsonwebtoken");
+const Application = require("../models/application");
+const Job = require("../models/job");
 
 /* ===========================
  * CREATE USER (Anyone)
@@ -25,7 +27,8 @@ const createUser = async (req, res) => {
       .status(201)
       .json({ message: "User created successfully!", user: newUser });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error creating user:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
@@ -36,34 +39,32 @@ const loginUser = async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email }).select(
       "+password"
-    ); // Ensure password is available for comparison
+    );
 
     if (!user) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      return res.status(401).json({ error: "Invalid email or password." });
     }
 
-    // ✅ Compare hashed password
     const isMatch = await bcrypt.compare(req.body.password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      return res.status(401).json({ error: "Invalid email or password." });
     }
 
-    // ✅ Generate JWT token for authentication
     const token = jwt.sign(
       { userId: user._id, userType: user.userType },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    // ✅ Exclude password from the response
     const userResponse = user.toObject();
     delete userResponse.password;
 
     res
       .status(200)
-      .json({ message: "Login successful", token, user: userResponse });
+      .json({ message: "Login successful!", token, user: userResponse });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error logging in:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
@@ -81,7 +82,8 @@ const getAllUsers = async (req, res) => {
     const users = await User.find();
     res.status(200).json(users);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error retrieving users:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
@@ -90,10 +92,7 @@ const getAllUsers = async (req, res) => {
  * =========================== */
 const getUserById = async (req, res) => {
   try {
-    // Extract userId from the token
     const { userId, userType } = req.user;
-
-    // If requesting own profile, use token userId
     const targetUserId = userType === "admin" ? req.params.id : userId;
 
     const user = await User.findById(targetUserId).select("-password");
@@ -104,7 +103,8 @@ const getUserById = async (req, res) => {
 
     res.status(200).json(user);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching user:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
@@ -113,22 +113,21 @@ const getUserById = async (req, res) => {
  * =========================== */
 const updateUser = async (req, res) => {
   try {
-    // Extract userId and userType from the token
     const { userId, userType } = req.user;
 
-    console.log("Token userId:", userId, "Request userId:", req.params.id); // Debugging
+    console.log("Token userId:", userId, "Request userId:", req.params.id);
 
-    // Ensure only admins or the user themselves can update their profile
     if (
       userType !== "admin" &&
       userId.toString() !== req.params.id.toString()
     ) {
-      return res.status(403).json({
-        error: "Unauthorized: You can only edit your own account details.",
-      });
+      return res
+        .status(403)
+        .json({
+          error: "Unauthorized: You can only edit your own account details.",
+        });
     }
 
-    // Prevent non-admins from changing their `userType`
     if (userType !== "admin" && req.body.userType) {
       delete req.body.userType;
     }
@@ -136,18 +135,21 @@ const updateUser = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-    }).select("-password"); // Exclude password from response
+    }).select("-password");
 
     if (!updatedUser) {
       return res.status(404).json({ error: "User not found." });
     }
 
-    res.status(200).json({
-      message: "User account updated successfully!",
-      user: updatedUser,
-    });
+    res
+      .status(200)
+      .json({
+        message: "User account updated successfully!",
+        user: updatedUser,
+      });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error updating user:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
@@ -179,7 +181,8 @@ const deleteUser = async (req, res) => {
     await User.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "User deleted successfully!" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error deleting user:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 

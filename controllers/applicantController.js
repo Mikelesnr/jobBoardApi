@@ -6,17 +6,16 @@ const User = require("../models/user");
  * =========================== */
 const createApplicantProfile = async (req, res) => {
   try {
-    // Extract userId and userType from token
     const { userId, userType } = req.user;
 
     if (userType !== "applicant") {
-      return res.status(401).json({
+      return res.status(403).json({
         error: "Forbidden: Only applicants can create an applicant profile.",
       });
     }
 
     const newApplicant = new Applicant({
-      userId: userId,
+      userId,
       resumeUrl: req.body.resumeUrl || "",
       skills: req.body.skills || [],
       experience: req.body.experience || [],
@@ -29,7 +28,8 @@ const createApplicantProfile = async (req, res) => {
       applicant: newApplicant,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error creating applicant profile:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
@@ -39,11 +39,15 @@ const createApplicantProfile = async (req, res) => {
 const getApplicantProfile = async (req, res) => {
   try {
     const applicant = await Applicant.findOne({ userId: req.user._id });
-    if (!applicant) return res.status(404).send("Applicant profile not found");
+
+    if (!applicant) {
+      return res.status(404).json({ error: "Applicant profile not found." });
+    }
 
     res.status(200).json(applicant);
   } catch (error) {
-    res.status(500).send("Error fetching applicant profile: " + error.message);
+    console.error("Error fetching applicant profile:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
@@ -57,23 +61,19 @@ const updateApplicantProfile = async (req, res) => {
       req.user.userId,
       "User Type:",
       req.user.userType
-    ); // Debugging
+    );
 
-    // Allow admins to update any applicant OR allow applicants to update their own profile
     const filter =
       req.user.userType === "admin"
-        ? { userId: req.params.id } // Admin updates any applicant
-        : { userId: req.user.userId }; // Applicant updates their own profile
+        ? { userId: req.params.id }
+        : { userId: req.user.userId };
 
     const applicant = await Applicant.findOne(filter);
 
     if (!applicant) {
-      return res
-        .status(404)
-        .json({
-          error:
-            "Applicant profile not found or you do not have permission to edit it.",
-        });
+      return res.status(404).json({
+        error: "Applicant profile not found or unauthorized.",
+      });
     }
 
     const updatedApplicant = await Applicant.findOneAndUpdate(
@@ -90,9 +90,8 @@ const updateApplicantProfile = async (req, res) => {
       applicant: updatedApplicant,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Error updating applicant profile: " + error.message });
+    console.error("Error updating applicant profile:", error);
+    res.status(500).json({ error: "Internal server error." });
   }
 };
 
