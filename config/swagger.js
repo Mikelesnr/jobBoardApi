@@ -6,8 +6,34 @@ const doc = {
     title: "Job Listing API",
     description: "API documentation for job postings and applications",
   },
-  host: process.env.BASE_URL.replace(/^https?:\/\//, "") || "localhost:3000",
+  host: process.env.SERVER_URL?.replace(/^https?:\/\//, ""),
   schemes: [process.env.PROTOCOL || "http"],
+  tags: [
+    {
+      name: "Applicants",
+      description: "Endpoints related to Applicants",
+    },
+    {
+      name: "Applications",
+      description: "Endpoints related to Applications",
+    },
+    {
+      name: "General",
+      description: "Endpoints related to General functionality",
+    },
+    {
+      name: "Authentication",
+      description: "Endpoints related to user authentication",
+    },
+    {
+      name: "Employers",
+      description: "Endpoints related to Employers",
+    },
+    {
+      name: "Jobs",
+      description: "Endpoints related to Jobs",
+    },
+  ],
   securityDefinitions: {
     githubOAuth: {
       type: "oauth2",
@@ -19,36 +45,11 @@ const doc = {
       },
     },
   },
-  paths: {
-    "/auth/github": {
-      get: {
-        summary: "Initiates GitHub OAuth login",
-        responses: {
-          302: {
-            description: "Redirects to GitHub OAuth login",
-          },
-        },
-      },
-    },
-    "/oauth-callback": {
-      get: {
-        summary: "Handles GitHub OAuth callback and issues JWT token",
-        security: [{ githubOAuth: [] }],
-        responses: {
-          200: {
-            description: "Returns JWT token after successful authentication",
-          },
-        },
-      },
-    },
-  },
 };
 
-// ✅ Only include `index.js`, since it already imports all other routes
-const outputFile = "./config/swagger.json"; // Location of generated Swagger JSON
-const endpointsFiles = ["./routes/index.js"]; // This ensures ALL routes are included via index.js
+const outputFile = "./config/swagger.json";
+const endpointsFiles = ["../routes/index.js"]; // This allows Swagger to auto-detect all routes
 
-// 🚀 Generate Swagger Documentation
 swaggerAutogen(outputFile, endpointsFiles, doc).then(() => {
   console.log("✅ Swagger documentation generated successfully!");
   process.exit(0);

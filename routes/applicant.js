@@ -9,25 +9,36 @@ const {
   authenticateUser,
   authorizeApplicant,
   authorizeAdmin,
+  authorizeEmployer,
 } = require("../utilities/middleware");
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Applicants
+ *     description: Routes for applicant profiles and management
+ */
 
 /* =========================== */
 /* APPLICANT ROUTES */
 /* =========================== */
 
-// Authenticate all routes first, then authorize appropriately
 router.post(
   "/profile",
   authenticateUser,
   authorizeApplicant,
   createApplicantProfile
 );
+
+router.get("/profile", authenticateUser, authorizeAdmin, getApplicantProfile);
+
 router.get(
-  "/profile",
+  "/profile/:id",
   authenticateUser,
-  authorizeApplicant || authorizeAdmin,
+  authorizeApplicant || authorizeAdmin || authorizeEmployer,
   getApplicantProfile
 );
+
 router.put(
   "/profile",
   authenticateUser,

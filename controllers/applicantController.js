@@ -25,17 +25,50 @@ const createApplicantProfile = async (req, res) => {
 };
 
 /* =========================== */
-/* GET APPLICANT PROFILE (Admin, Applicants & GitHub OAuth Users) */
+/* GET APPLICANT PROFILE */
 /* =========================== */
 const getApplicantProfile = async (req, res) => {
   try {
-    const applicant = await Applicant.findOne({ userId: req.user.userId });
+    console.log("Fetching applicant profile for user:", req.user.userId);
+    const { userType, userId } = req.user; // Extract userType and userId from auth
+    const applicantId = req.params.id;
 
-    if (!applicant) {
-      return res.status(404).json({ error: "Applicant profile not found." });
+    // Employers and Admins can access any applicant profile
+    if (userType === "Employer" || userType === "Admin") {
+      const applicant = await Applicant.findById(applicantId).populate(
+        "userId",
+        "name email"
+      );
+
+      if (!applicant) {
+        return res.status(404).json({ error: "Applicant profile not found." });
+      }
+
+      return res.status(200).json(applicant);
     }
 
-    res.status(200).json(applicant);
+    // Applicants and GitHub OAuth users can only access their own profile
+    if (userType === "Applicant" || userType === "GitHub") {
+      if (applicantId !== userId) {
+        return res
+          .status(403)
+          .json({ error: "Unauthorized access to applicant profile." });
+      }
+
+      const applicant = await Applicant.findById(applicantId).populate(
+        "userId",
+        "name email"
+      );
+
+      if (!applicant) {
+        return res.status(404).json({ error: "Applicant profile not found." });
+      }
+
+      return res.status(200).json(applicant);
+    }
+
+    // If userType is not recognized
+    return res.status(403).json({ error: "Unauthorized user type." });
   } catch (error) {
     console.error("Error fetching applicant profile:", error);
     res.status(500).json({ error: "Internal server error." });

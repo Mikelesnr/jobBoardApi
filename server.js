@@ -49,7 +49,7 @@ connectDB()
 /* =========================== */
 /* 📌 Routes Configuration */
 /* =========================== */
-app.use("/", require("./routes/index.js"));
+app.use("/", require("./routes/index")); // ✅ Import and use routes
 
 /* =========================== */
 /* 📌 get server from environment variables */

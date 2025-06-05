@@ -15,11 +15,15 @@ const {
   authorizeAdmin,
 } = require("../utilities/middleware");
 
+/* #swagger.tags = ['Employers'] */
+/* #swagger.description = 'Routes for employer profiles and job management' */
+
 /* =========================== */
 /* EMPLOYER ROUTES */
 /* =========================== */
 
-// Create employer profile (Employers Only)
+/* #swagger.tags = ['Employers']
+   #swagger.description = 'Create an employer profile' */
 router.post(
   "/profile",
   authenticateUser,
@@ -27,7 +31,8 @@ router.post(
   createEmployerProfile
 );
 
-// Get employer profile (Admin or Employer)
+/* #swagger.tags = ['Employers']
+   #swagger.description = 'Retrieve an employer profile (Admin or Employer Only)' */
 router.get(
   "/profile",
   authenticateUser,
@@ -35,7 +40,8 @@ router.get(
   getEmployerProfile
 );
 
-// Update employer profile (Admin or Employer)
+/* #swagger.tags = ['Employers']
+   #swagger.description = 'Update an employer profile (Admin or Employer Only)' */
 router.put(
   "/profile",
   authenticateUser,
@@ -43,10 +49,20 @@ router.put(
   updateEmployerProfile
 );
 
-// Post job listing (Employers Only)
+/* =========================== */
+/* JOB POSTING ROUTES (Employers Only) */
+/* =========================== */
+
+/* #swagger.tags = ['Employers']
+   #swagger.description = 'Create a new job listing (Employers Only)' */
 router.post("/jobs", authenticateUser, authorizeEmployer, postJob);
 
-// Get job applications (Employers Only)
+/* =========================== */
+/* JOB APPLICATIONS ROUTES (Employers Only) */
+/* =========================== */
+
+/* #swagger.tags = ['Employers']
+   #swagger.description = 'Retrieve applications for a specific job posting' */
 router.get(
   "/jobs/:jobId/applications",
   authenticateUser,
@@ -54,7 +70,8 @@ router.get(
   getJobApplications
 );
 
-// Update application status (Employers Only)
+/* #swagger.tags = ['Employers']
+   #swagger.description = 'Update the status of a job application' */
 router.put(
   "/applications/:applicationId/status",
   authenticateUser,

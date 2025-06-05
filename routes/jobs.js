@@ -7,9 +7,8 @@ const {
   authorizeAdmin,
 } = require("../utilities/middleware");
 
-/* =========================== */
-/* CREATE JOB (Employers Only) */
-/* =========================== */
+/* #swagger.tags = ['Jobs']
+   #swagger.description = 'Create a new job listing (Employers Only)' */
 router.post(
   "/create",
   authenticateUser,
@@ -17,9 +16,8 @@ router.post(
   jobController.createJob
 );
 
-/* =========================== */
-/* EDIT JOB (Employers Only) */
-/* =========================== */
+/* #swagger.tags = ['Jobs']
+   #swagger.description = 'Edit an existing job listing (Employers Only)' */
 router.put(
   "/:id/edit",
   authenticateUser,
@@ -27,9 +25,8 @@ router.put(
   jobController.editJob
 );
 
-/* =========================== */
-/* DELETE JOB (Employers Only) */
-/* =========================== */
+/* #swagger.tags = ['Jobs']
+   #swagger.description = 'Delete a job listing (Employers or Admin Only)' */
 router.delete(
   "/:id",
   authenticateUser,
@@ -37,14 +34,12 @@ router.delete(
   jobController.deleteJob
 );
 
-/* =========================== */
-/* GET ALL JOBS (Public) */
-/* =========================== */
+/* #swagger.tags = ['Jobs']
+   #swagger.description = 'Retrieve all job listings' */
 router.get("/", jobController.getAllJobs);
 
-/* =========================== */
-/* GET JOB BY ID (Public) */
-/* =========================== */
+/* #swagger.tags = ['Jobs']
+   #swagger.description = 'Retrieve a specific job listing by ID' */
 router.get("/:id", jobController.getJobById);
 
 module.exports = router;

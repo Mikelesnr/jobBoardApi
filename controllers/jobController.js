@@ -1,4 +1,5 @@
 const Job = require("../models/job");
+const Application = require("../models/application");
 
 /* =========================== */
 /* CREATE JOB (Employers Only) */
@@ -60,10 +61,17 @@ const deleteJob = async (req, res) => {
       return res.status(404).json({ error: "Job not found." });
     }
 
+    // Delete applications associated with the job
+    await Application.deleteMany({ jobId });
+
+    // Delete the job itself
     await Job.findByIdAndDelete(jobId);
-    res.status(200).json({ message: "Job deleted successfully!" });
+
+    res.status(200).json({
+      message: "Job and associated applications deleted successfully!",
+    });
   } catch (error) {
-    console.error("Error deleting job:", error);
+    console.error("Error deleting job and applications:", error);
     res.status(500).json({ error: "Internal server error." });
   }
 };
