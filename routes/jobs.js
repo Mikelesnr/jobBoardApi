@@ -4,11 +4,12 @@ const jobController = require("../controllers/jobController");
 const {
   authenticateUser,
   authorizeEmployer,
-} = require("../middleware/authMiddleware");
+  authorizeAdmin,
+} = require("../utilities/middleware");
 
-/* ===========================
- * CREATE JOB (Employers Only)
- * =========================== */
+/* =========================== */
+/* CREATE JOB (Employers Only) */
+/* =========================== */
 router.post(
   "/create",
   authenticateUser,
@@ -16,9 +17,9 @@ router.post(
   jobController.createJob
 );
 
-/* ===========================
- * EDIT JOB (Employers Only)
- * =========================== */
+/* =========================== */
+/* EDIT JOB (Employers Only) */
+/* =========================== */
 router.put(
   "/:id/edit",
   authenticateUser,
@@ -26,24 +27,24 @@ router.put(
   jobController.editJob
 );
 
-/* ===========================
- * DELETE JOB (Employers Only)
- * =========================== */
+/* =========================== */
+/* DELETE JOB (Employers Only) */
+/* =========================== */
 router.delete(
   "/:id",
   authenticateUser,
-  authorizeEmployer,
+  authorizeEmployer || authorizeAdmin,
   jobController.deleteJob
 );
 
-/* ===========================
- * GET ALL JOBS (Public)
- * =========================== */
+/* =========================== */
+/* GET ALL JOBS (Public) */
+/* =========================== */
 router.get("/", jobController.getAllJobs);
 
-/* ===========================
- * GET JOB BY ID (Public)
- * =========================== */
+/* =========================== */
+/* GET JOB BY ID (Public) */
+/* =========================== */
 router.get("/:id", jobController.getJobById);
 
 module.exports = router;

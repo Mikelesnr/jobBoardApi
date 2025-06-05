@@ -1,21 +1,12 @@
 const Applicant = require("../models/applicant");
-const User = require("../models/user");
 
-/* ===========================
- * CREATE APPLICANT PROFILE (Applicants Only)
- * =========================== */
+/* =========================== */
+/* CREATE APPLICANT PROFILE (Applicants & GitHub OAuth Users) */
+/* =========================== */
 const createApplicantProfile = async (req, res) => {
   try {
-    const { userId, userType } = req.user;
-
-    if (userType !== "applicant") {
-      return res.status(403).json({
-        error: "Forbidden: Only applicants can create an applicant profile.",
-      });
-    }
-
     const newApplicant = new Applicant({
-      userId,
+      userId: req.user.userId,
       resumeUrl: req.body.resumeUrl || "",
       skills: req.body.skills || [],
       experience: req.body.experience || [],
@@ -33,12 +24,12 @@ const createApplicantProfile = async (req, res) => {
   }
 };
 
-/* ===========================
- * GET APPLICANT PROFILE (Admin or Applicant)
- * =========================== */
+/* =========================== */
+/* GET APPLICANT PROFILE (Admin, Applicants & GitHub OAuth Users) */
+/* =========================== */
 const getApplicantProfile = async (req, res) => {
   try {
-    const applicant = await Applicant.findOne({ userId: req.user._id });
+    const applicant = await Applicant.findOne({ userId: req.user.userId });
 
     if (!applicant) {
       return res.status(404).json({ error: "Applicant profile not found." });
@@ -51,18 +42,11 @@ const getApplicantProfile = async (req, res) => {
   }
 };
 
-/* ===========================
- * UPDATE APPLICANT PROFILE (Admin or Applicant)
- * =========================== */
+/* =========================== */
+/* UPDATE APPLICANT PROFILE (Admin, Applicants & GitHub OAuth Users) */
+/* =========================== */
 const updateApplicantProfile = async (req, res) => {
   try {
-    console.log(
-      "Extracted User ID:",
-      req.user.userId,
-      "User Type:",
-      req.user.userType
-    );
-
     const filter =
       req.user.userType === "admin"
         ? { userId: req.params.id }

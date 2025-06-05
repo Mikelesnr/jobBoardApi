@@ -2,21 +2,13 @@ const Employer = require("../models/employer");
 const Job = require("../models/job");
 const Application = require("../models/application");
 
-/* ===========================
- * CREATE EMPLOYER PROFILE (Employers Only)
- * =========================== */
+/* =========================== */
+/* CREATE EMPLOYER PROFILE */
+/* =========================== */
 const createEmployerProfile = async (req, res) => {
   try {
-    const { userId, userType } = req.user;
-
-    if (userType !== "employer") {
-      return res.status(403).json({
-        error: "Forbidden: Only employers can create an employer profile.",
-      });
-    }
-
     const newEmployer = new Employer({
-      userId,
+      userId: req.user.userId,
       companyName: req.body.companyName || "",
       jobListings: req.body.jobListings || [],
     });
@@ -32,12 +24,12 @@ const createEmployerProfile = async (req, res) => {
   }
 };
 
-/* ===========================
- * GET EMPLOYER PROFILE (Admin or Employer)
- * =========================== */
+/* =========================== */
+/* GET EMPLOYER PROFILE */
+/* =========================== */
 const getEmployerProfile = async (req, res) => {
   try {
-    const employer = await Employer.findOne({ userId: req.user._id });
+    const employer = await Employer.findOne({ userId: req.user.userId });
 
     if (!employer) {
       return res.status(404).json({ error: "Employer profile not found." });
@@ -50,24 +42,22 @@ const getEmployerProfile = async (req, res) => {
   }
 };
 
-/* ===========================
- * UPDATE EMPLOYER PROFILE (Admin or Employer)
- * =========================== */
+/* =========================== */
+/* UPDATE EMPLOYER PROFILE */
+/* =========================== */
 const updateEmployerProfile = async (req, res) => {
   try {
-    const employer = await Employer.findOne({ userId: req.user._id });
-
-    if (!employer && req.user.userType !== "admin") {
-      return res.status(404).json({
-        error: "Employer profile not found or unauthorized.",
-      });
-    }
-
     const updatedEmployer = await Employer.findOneAndUpdate(
-      { userId: req.user._id },
+      { userId: req.user.userId },
       req.body,
       { new: true, runValidators: true }
     );
+
+    if (!updatedEmployer) {
+      return res.status(404).json({
+        error: "Employer profile not found.",
+      });
+    }
 
     res.status(200).json({
       message: "Employer profile updated successfully!",
@@ -79,13 +69,13 @@ const updateEmployerProfile = async (req, res) => {
   }
 };
 
-/* ===========================
- * POST JOB LISTING (Employers Only)
- * =========================== */
+/* =========================== */
+/* POST JOB LISTING */
+/* =========================== */
 const postJob = async (req, res) => {
   try {
     const newJob = new Job({
-      employerId: req.user._id,
+      employerId: req.user.userId,
       title: req.body.title,
       description: req.body.description,
       requirements: req.body.requirements,
@@ -99,9 +89,9 @@ const postJob = async (req, res) => {
   }
 };
 
-/* ===========================
- * GET JOB APPLICATIONS (Employer Only)
- * =========================== */
+/* =========================== */
+/* GET JOB APPLICATIONS */
+/* =========================== */
 const getJobApplications = async (req, res) => {
   try {
     const applications = await Application.find({
@@ -121,9 +111,9 @@ const getJobApplications = async (req, res) => {
   }
 };
 
-/* ===========================
- * UPDATE APPLICATION STATUS (Employers Only)
- * =========================== */
+/* =========================== */
+/* UPDATE APPLICATION STATUS */
+/* =========================== */
 const updateApplicationStatus = async (req, res) => {
   try {
     const application = await Application.findById(req.params.applicationId);
@@ -134,12 +124,10 @@ const updateApplicationStatus = async (req, res) => {
 
     application.status = req.body.status;
     await application.save();
-    res
-      .status(200)
-      .json({
-        message: "Application status updated successfully!",
-        application,
-      });
+    res.status(200).json({
+      message: "Application status updated successfully!",
+      application,
+    });
   } catch (error) {
     console.error("Error updating application status:", error);
     res.status(500).json({ error: "Internal server error." });

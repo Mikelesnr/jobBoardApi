@@ -4,18 +4,19 @@ const express = require("express");
 const cors = require("cors"); // ✅ Import CORS middleware
 const swaggerUi = require("swagger-ui-express");
 const swaggerFile = require("./config/swagger.json");
+const { requestLogger, errorHandler } = require("./utilities/middleware"); // ✅ Import middleware
 
-/* ===========================
- * 📌 Database Connection
- * =========================== */
+/* =========================== */
+/* 📌 Database Connection */
+/* =========================== */
 const { connectDB } = require("./database/db");
 
 const app = express();
 app.use(express.static("public"));
 
-/* ===========================
- * 📌 Enable CORS (Allows requests from any origin)
- * =========================== */
+/* =========================== */
+/* 📌 Enable CORS (Allows requests from any origin) */
+/* =========================== */
 app.use((req, res, next) => {
   if (req.path.startsWith("/api-docs")) {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -32,33 +33,32 @@ app.use((req, res, next) => {
   cors()(req, res, next); // ✅ Default CORS for all other routes
 });
 
-/* ===========================
- * 📌 Server Configuration
- * =========================== */
-const port = process.env.PORT || 3000;
-const serverUrl = process.env.SERVER_URL || `http://localhost:${port}`;
-const dbURI = process.env.DB_URI || "mongodb://127.0.0.1:27017/cse340";
+/* =========================== */
+/* 📌 Apply Middleware */
+/* =========================== */
+app.use(requestLogger); // ✅ Log requests
+app.use(express.json()); // ✅ Parse JSON requests
 
-/* ===========================
- * 📌 Connect to MongoDB
- * =========================== */
+/* =========================== */
+/* 📌 Connect to MongoDB */
+/* =========================== */
 connectDB()
   .then(() => console.log("MongoDB Connected 🚀"))
   .catch((err) => console.error("MongoDB Connection Error:", err));
 
-/* ===========================
- * 📌 Middleware Setup
- * =========================== */
-app.use(express.json());
-
-/* ===========================
- * 📌 Routes Configuration
- * =========================== */
+/* =========================== */
+/* 📌 Routes Configuration */
+/* =========================== */
 app.use("/", require("./routes/index.js"));
 
-/* ===========================
- * 📌 Swagger API Documentation
- * =========================== */
+/* =========================== */
+/* 📌 get server from environment variables */
+/* =========================== */
+const port = process.env.PORT || 3000;
+const serverUrl = process.env.SERVER_URL || `http://localhost:${port}`;
+/* =========================== */
+/* 📌 Swagger API Documentation */
+/* =========================== */
 app.use(
   "/api-docs",
   swaggerUi.serve,
@@ -77,9 +77,15 @@ app.use(
   })
 );
 
-/* ===========================
- * 📌 Start Server
- * =========================== */
+/* =========================== */
+/* 📌 Apply Global Error Handler */
+/* =========================== */
+app.use(errorHandler); // ✅ Catch and handle errors
+
+/* =========================== */
+/* 📌 Start Server */
+/* =========================== */
+
 app.listen(port, () => {
   console.log(`🚀 Server is running on ${serverUrl}`);
 });

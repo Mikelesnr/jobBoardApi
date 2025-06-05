@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 
 const jobSchema = new mongoose.Schema({
-  title: { type: String, required: true, trim: true },
-  description: { type: String, required: true },
-  salary: { type: Number, required: true },
-  location: { type: String, required: true },
+  title: { type: String, required: true, trim: true, minlength: 3 },
+  description: { type: String, required: true, trim: true, minlength: 10 }, // Ensures description isn't too short
+  salary: { type: Number, required: true, min: 0 }, // Ensures non-negative salary
+  location: { type: String, required: true, trim: true },
   employer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -12,11 +12,9 @@ const jobSchema = new mongoose.Schema({
   },
   companyImage: {
     type: String,
-    required: false,
-    match: /^https?:\/\/.*\.(jpeg|jpg|png|gif)$/i,
-  }, // Ensures valid image URL
+    match: /^https?:\/\/.*\.(jpeg|jpg|png|gif)$/i, // Validates image URLs
+  },
   createdAt: { type: Date, default: Date.now },
 });
 
-const Job = mongoose.model("Job", jobSchema);
-module.exports = Job;
+module.exports = mongoose.model("Job", jobSchema);

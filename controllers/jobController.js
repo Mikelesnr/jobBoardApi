@@ -1,23 +1,17 @@
 const Job = require("../models/job");
 
-/* ===========================
- * CREATE JOB (Employer Only)
- * =========================== */
+/* =========================== */
+/* CREATE JOB (Employers Only) */
+/* =========================== */
 const createJob = async (req, res) => {
   try {
-    if (req.user.userType !== "employer") {
-      return res
-        .status(403)
-        .json({ error: "Unauthorized: Only employers can post jobs." });
-    }
-
     const newJob = new Job({
       title: req.body.title,
       description: req.body.description,
       salary: req.body.salary,
       location: req.body.location,
       employer: req.user._id,
-      companyImage: req.body.companyImage || "/images/default-company.png", // Set default image if empty
+      companyImage: req.body.companyImage || "/images/default-company.png", // Default image if empty
     });
 
     await newJob.save();
@@ -28,9 +22,9 @@ const createJob = async (req, res) => {
   }
 };
 
-/* ===========================
- * EDIT JOB (Employer Only)
- * =========================== */
+/* =========================== */
+/* EDIT JOB (Employers Only) */
+/* =========================== */
 const editJob = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -38,14 +32,6 @@ const editJob = async (req, res) => {
 
     if (!job) {
       return res.status(404).json({ error: "Job not found." });
-    }
-
-    if (job.employer.toString() !== req.user._id.toString()) {
-      return res
-        .status(403)
-        .json({
-          error: "Unauthorized: You can only edit your own job postings.",
-        });
     }
 
     // Preserve existing company image if not provided in update
@@ -62,9 +48,9 @@ const editJob = async (req, res) => {
   }
 };
 
-/* ===========================
- * DELETE JOB (Employer Only)
- * =========================== */
+/* =========================== */
+/* DELETE JOB (Employers Only) */
+/* =========================== */
 const deleteJob = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -72,14 +58,6 @@ const deleteJob = async (req, res) => {
 
     if (!job) {
       return res.status(404).json({ error: "Job not found." });
-    }
-
-    if (job.employer.toString() !== req.user._id.toString()) {
-      return res
-        .status(403)
-        .json({
-          error: "Unauthorized: You can only delete your own job postings.",
-        });
     }
 
     await Job.findByIdAndDelete(jobId);
@@ -90,12 +68,12 @@ const deleteJob = async (req, res) => {
   }
 };
 
-/* ===========================
- * GET ALL JOBS (Anyone Can View)
- * =========================== */
+/* =========================== */
+/* GET ALL JOBS (Anyone Can View) */
+/* =========================== */
 const getAllJobs = async (req, res) => {
   try {
-    const jobs = await Job.find().populate("employer", "name email"); // Show employer name & email
+    const jobs = await Job.find().populate("employer", "name email"); // Show employer details
 
     if (!jobs.length) {
       return res.status(404).json({ error: "No jobs found." });
@@ -108,9 +86,9 @@ const getAllJobs = async (req, res) => {
   }
 };
 
-/* ===========================
- * GET JOB BY ID (Anyone Can View)
- * =========================== */
+/* =========================== */
+/* GET JOB BY ID (Anyone Can View) */
+/* =========================== */
 const getJobById = async (req, res) => {
   try {
     const jobId = req.params.id;

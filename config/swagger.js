@@ -51,4 +51,5 @@ const endpointsFiles = ["./routes/index.js"]; // This ensures ALL routes are inc
 // 🚀 Generate Swagger Documentation
 swaggerAutogen(outputFile, endpointsFiles, doc).then(() => {
   console.log("✅ Swagger documentation generated successfully!");
+  process.exit(0);
 });

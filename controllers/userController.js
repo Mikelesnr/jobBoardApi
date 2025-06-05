@@ -34,12 +34,20 @@ const loginUser = async (req, res) => {
       "+password"
     );
 
-    if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
+    if (!user) {
+      return res.status(401).json({ error: "Invalid email or password." });
+    }
+
+    // ✅ Allow login without password for GitHub users
+    if (
+      user.userType !== "github" &&
+      !(await bcrypt.compare(req.body.password, user.password))
+    ) {
       return res.status(401).json({ error: "Invalid email or password." });
     }
 
     const token = jwt.sign(
-      { userId: user._id, userType: user.userType },
+      { userId: user._id, userType: user.userType, username: user.username },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -81,24 +89,21 @@ const githubOAuthCallback = async (req, res) => {
           Accept: "application/json",
         },
         body: JSON.stringify({
-          client_id: process.env.CLIENT_ID, // GitHub Client ID
-          client_secret: process.env.CLIENT_SECRET, // GitHub Client Secret
+          client_id: process.env.CLIENT_ID,
+          client_secret: process.env.CLIENT_SECRET,
           code: code, // ✅ Use the received authorization code
         }),
       }
     );
 
     const tokenData = await tokenResponse.json();
-    const access_token = tokenData.access_token; // ✅ Extract the access token
-    console.log("Access Token:", access_token);
-
-    if (!access_token) {
+    const access_token = tokenData.access_token;
+    if (!access_token)
       return res
         .status(400)
         .json({ error: "Failed to obtain access token from GitHub." });
-    }
 
-    // 🔥 Use the access token to fetch user details
+    // 🔥 Fetch GitHub user details
     const userResponse = await fetch("https://api.github.com/user", {
       headers: { Authorization: `Bearer ${access_token}` },
     });
@@ -115,7 +120,7 @@ const githubOAuthCallback = async (req, res) => {
       emailData.find((email) => email.primary && email.verified)?.email ||
       `${githubUser.login}@github.com`;
 
-    // ✅ Store user info in database
+    // ✅ Store or retrieve user info
     let user = await User.findOne({ email: primaryEmail });
 
     if (!user) {
@@ -135,7 +140,14 @@ const githubOAuthCallback = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.json({ message: "GitHub login successful!", token, user });
+    const userWithoutPassword = user.toObject();
+    delete userWithoutPassword.password;
+
+    res.json({
+      message: "GitHub login successful!",
+      token,
+      user: userWithoutPassword,
+    });
   } catch (error) {
     console.error("GitHub OAuth error:", error);
     res.status(500).json({ error: "Internal server error." });
@@ -221,25 +233,42 @@ const updateUser = async (req, res) => {
   }
 };
 
-/* ===========================
- * DELETE USER (Admin or Self)
- * =========================== */
+/* =========================== */
+/* DELETE USER (Admin or Self) */
+/* =========================== */
 const deleteUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const userId = req.params.id;
+    const requestingUser = req.user;
 
+    // ✅ Ensure only the user or an admin can delete the account
     if (
-      !user ||
-      (req.user.userType !== "admin" &&
-        req.user._id.toString() !== user._id.toString())
+      requestingUser.userType !== "admin" &&
+      requestingUser._id.toString() !== userId.toString()
     ) {
       return res
         .status(403)
-        .json({ error: "Unauthorized: You can only delete your own profile." });
+        .json({ error: "Unauthorized: You can only delete your own account." });
     }
 
-    await User.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: "User deleted successfully!" });
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    // ✅ Cascade deletion logic based on user type
+    if (user.userType === "employer") {
+      await Employer.findOneAndDelete({ userId });
+      await Job.deleteMany({ employer: userId }); // Delete all jobs created by the employer
+    } else if (user.userType === "applicant" || user.userType === "github") {
+      await Applicant.findOneAndDelete({ userId });
+      await Application.deleteMany({ applicantId: userId }); // Delete all applications by the user
+    }
+
+    // ✅ Finally, delete the user itself
+    await User.findByIdAndDelete(userId);
+
+    res
+      .status(200)
+      .json({ message: "User and associated records deleted successfully!" });
   } catch (error) {
     console.error("Error deleting user:", error);
     res.status(500).json({ error: "Internal server error." });

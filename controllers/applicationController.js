@@ -1,9 +1,9 @@
 const asyncHandler = require("express-async-handler");
 const Application = require("../models/application");
 
-/* ===========================
- * APPLY FOR A JOB (Applicants Only)
- * =========================== */
+/* =========================== */
+/* APPLY FOR A JOB (Applicants & GitHub Users) */
+/* =========================== */
 const applyForJob = asyncHandler(async (req, res) => {
   try {
     const { jobId } = req.params;
@@ -25,9 +25,9 @@ const applyForJob = asyncHandler(async (req, res) => {
   }
 });
 
-/* ===========================
- * VIEW APPLICATION STATUS (Applicants Only)
- * =========================== */
+/* =========================== */
+/* VIEW APPLICATION STATUS (Applicants & GitHub Users) */
+/* =========================== */
 const getApplicationStatus = asyncHandler(async (req, res) => {
   try {
     const applications = await Application.find({
@@ -45,9 +45,9 @@ const getApplicationStatus = asyncHandler(async (req, res) => {
   }
 });
 
-/* ===========================
- * EMPLOYERS UPDATE APPLICATION STATUS (Only for Their Own Job Listings)
- * =========================== */
+/* =========================== */
+/* EMPLOYERS UPDATE APPLICATION STATUS (Only for Their Own Job Listings) */
+/* =========================== */
 const updateApplicationStatus = asyncHandler(async (req, res) => {
   try {
     const { appId } = req.params;
@@ -77,9 +77,9 @@ const updateApplicationStatus = asyncHandler(async (req, res) => {
   }
 });
 
-/* ===========================
- * GET USER APPLICATIONS (Applicants Only)
- * =========================== */
+/* =========================== */
+/* GET USER APPLICATIONS (Applicants & GitHub Users) */
+/* =========================== */
 const getUserApplications = asyncHandler(async (req, res) => {
   try {
     const applications = await Application.find({
@@ -97,9 +97,9 @@ const getUserApplications = asyncHandler(async (req, res) => {
   }
 });
 
-/* ===========================
- * GET APPLICATIONS FOR A JOB (Employers Only)
- * =========================== */
+/* =========================== */
+/* GET APPLICATIONS FOR A JOB (Employers Only) */
+/* =========================== */
 const getJobApplications = asyncHandler(async (req, res) => {
   try {
     const applications = await Application.find({
