@@ -13,6 +13,12 @@ const authenticateUser = (req, res, next) => {
       token.replace("Bearer ", ""),
       process.env.JWT_SECRET
     );
+
+    // Allow GitHub OAuth users (who may not have a password)
+    if (!decoded.userType) {
+      return res.status(403).json({ error: "Invalid user type." });
+    }
+
     req.user = decoded;
     next();
   } catch (error) {
