@@ -23,12 +23,17 @@ router.post(
   createApplicantProfile
 );
 
-router.get("/profile", authenticateUser, authorizeAdmin, getApplicantProfile);
+router.get(
+  "/profile",
+  authenticateUser,
+  authorizeApplicant,
+  getApplicantProfile
+);
 
 router.get(
   "/profile/:id",
   authenticateUser,
-  authorizeApplicant || authorizeAdmin || authorizeEmployer,
+  authorizeAdmin || authorizeEmployer,
   getApplicantProfile
 );
 

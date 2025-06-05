@@ -29,46 +29,54 @@ const createApplicantProfile = async (req, res) => {
 /* =========================== */
 const getApplicantProfile = async (req, res) => {
   try {
-    console.log("Fetching applicant profile for user:", req.user.userId);
-    const { userType, userId } = req.user; // Extract userType and userId from auth
-    const applicantId = req.params.id;
+    const { userId: authenticatedUserId, userType } = req.user; // Authenticated user's ID and type
 
-    // Employers and Admins can access any applicant profile
-    if (userType === "Employer" || userType === "Admin") {
-      const applicant = await Applicant.findById(applicantId).populate(
-        "userId",
-        "name email"
-      );
+    let queryUserId; // This will be the User ID we search by
 
-      if (!applicant) {
-        return res.status(404).json({ error: "Applicant profile not found." });
-      }
-
-      return res.status(200).json(applicant);
-    }
-
-    // Applicants and GitHub OAuth users can only access their own profile
-    if (userType === "Applicant" || userType === "GitHub") {
-      if (applicantId !== userId) {
+    // Logic to determine which User ID to use for the query
+    if (userType === "applicant" || userType === "github") {
+      // <--- MODIFIED HERE
+      // If the authenticated user is an applicant or github user, they can only view their own profile
+      if (req.params.id && req.params.id !== authenticatedUserId.toString()) {
+        // Prevent an applicant/github user from trying to view another's profile via /profile/:id
         return res
           .status(403)
-          .json({ error: "Unauthorized access to applicant profile." });
+          .json({
+            error: "Forbidden: You can only view your own applicant profile.",
+          });
       }
-
-      const applicant = await Applicant.findById(applicantId).populate(
-        "userId",
-        "name email"
-      );
-
-      if (!applicant) {
-        return res.status(404).json({ error: "Applicant profile not found." });
+      queryUserId = authenticatedUserId; // Applicant/Github user is requesting their own profile
+    } else if (userType === "admin" || userType === "employer") {
+      // Admins and Employers can view any applicant profile by providing the User's ID in the path
+      if (!req.params.id) {
+        // If no ID is provided, and it's not an applicant requesting their own, this route is invalid
+        return res
+          .status(400)
+          .json({ error: "User ID is required for Admin/Employer lookup." });
       }
-
-      return res.status(200).json(applicant);
+      queryUserId = req.params.id; // Admin/Employer is requesting by specific User ID
+    } else {
+      // Fallback for unauthorized user types
+      return res
+        .status(403)
+        .json({
+          error: "Forbidden: Not authorized to view applicant profiles.",
+        });
     }
 
-    // If userType is not recognized
-    return res.status(403).json({ error: "Unauthorized user type." });
+    // Find the Applicant profile using the 'userId' field, then populate the associated user's name and email
+    const applicant = await Applicant.findOne({ userId: queryUserId }).populate(
+      "userId",
+      "name email"
+    );
+
+    if (!applicant) {
+      return res
+        .status(404)
+        .json({ error: "Applicant profile not found for the specified user." });
+    }
+
+    res.status(200).json(applicant);
   } catch (error) {
     console.error("Error fetching applicant profile:", error);
     res.status(500).json({ error: "Internal server error." });
