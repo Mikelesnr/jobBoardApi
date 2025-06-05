@@ -7,34 +7,78 @@ const employerRoutes = require("./employer");
 const applicantRoutes = require("./applicant");
 const welcomeController = require("../controllers/welcomeController");
 
-/* ===========================
- * USER ROUTES (Authentication & Profile Management)
- * =========================== */
+/**
+ * @swagger
+ * tags:
+ *   - name: Authentication
+ *     description: User authentication, registration, and profile management
+ *   - name: Jobs
+ *     description: Job postings and management
+ *   - name: Applications
+ *     description: Job application tracking
+ *   - name: Employers
+ *     description: Employer profiles and job management
+ *   - name: Applicants
+ *     description: Applicant profiles and job search
+ *   - name: General
+ *     description: General application routes
+ */
+
+/**
+ * @swagger
+ * /auth:
+ *   get:
+ *     tags: [Authentication]
+ *     description: Handles authentication routes including login and registration
+ */
 router.use("/auth", authRoutes);
 
-/* ===========================
- * JOB ROUTES (Job Listings & Management)
- * =========================== */
+/**
+ * @swagger
+ * /jobs:
+ *   get:
+ *     tags: [Jobs]
+ *     description: Handles job listings and job management
+ */
 router.use("/jobs", jobRoutes);
 
-/* ===========================
- * APPLICANT ROUTES (Applicant Profiles & Management)
- * =========================== */
+/**
+ * @swagger
+ * /applicants:
+ *   get:
+ *     tags: [Applicants]
+ *     description: Handles applicant profiles and management
+ */
 router.use("/applicants", applicantRoutes);
 
-/* ===========================
- * EMPLOYER ROUTES (Employer Profiles & Management)
- * =========================== */
+/**
+ * @swagger
+ * /employers:
+ *   get:
+ *     tags: [Employers]
+ *     description: Handles employer profiles and job postings
+ */
 router.use("/employers", employerRoutes);
 
-/* ===========================
- * APPLICATION ROUTES (Job Applications & Tracking)
- * =========================== */
+/**
+ * @swagger
+ * /applications:
+ *   get:
+ *     tags: [Applications]
+ *     description: Handles job applications and tracking
+ */
 router.use("/applications", applicationRoutes);
 
-/* ===========================
- * WELCOME ROUTE (Homepage)
- * =========================== */
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     tags: [General]
+ *     description: Welcome route for homepage
+ *     responses:
+ *       200:
+ *         description: Welcome message
+ */
 router.get("/", welcomeController.showHomePage);
 
 module.exports = router;

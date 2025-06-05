@@ -1,21 +1,10 @@
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const Employer = require("../models/employer"); // Assuming you have these models
-const Applicant = require("../models/applicant"); // Assuming you have these models
-const Job = require("../models/job"); // Assuming you have these models
-const Application = require("../models/application"); // Assuming you have these models
-
-/* ===========================
- * Helper Function for JWT Token Generation
- * =========================== */
-const generateJwtToken = (user) => {
-  return jwt.sign(
-    { userId: user._id, userType: user.userType, username: user.username },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
-};
+const Employer = require("../models/employer");
+const Applicant = require("../models/applicant");
+const Job = require("../models/job");
+const Application = require("../models/application");
 
 /* ===========================
  * REGISTER NEW USER (Anyone)
@@ -53,7 +42,7 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password." });
     }
 
-    // Allow login without password for GitHub users
+    // ✅ Allow login without password for GitHub users
     if (
       user.userType !== "github" &&
       !(await bcrypt.compare(req.body.password, user.password))
@@ -61,7 +50,11 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password." });
     }
 
-    const token = generateJwtToken(user); // Use the helper function
+    const token = jwt.sign(
+      { userId: user._id, userType: user.userType, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
 
     const userResponse = user.toObject();
     delete userResponse.password;
@@ -76,19 +69,118 @@ const loginUser = async (req, res) => {
 };
 
 /* ===========================
+ * GITHUB OAUTH LOGIN
+ * =========================== */
+const githubOAuthLogin = (req, res) => {
+  const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user`;
+  res.redirect(githubAuthUrl);
+};
+
+const githubOAuthCallback = async (req, res) => {
+  const { code } = req.query;
+  if (!code) {
+    return res
+      .status(400)
+      .json({ error: "Missing authorization code from GitHub." });
+  }
+
+  try {
+    // 🔥 Fetch GitHub OAuth token
+    const tokenResponse = await fetch(
+      "https://github.com/login/oauth/access_token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          client_id: process.env.GITHUB_CLIENT_ID,
+          client_secret: process.env.GITHUB_CLIENT_SECRET,
+          code,
+        }),
+      }
+    );
+
+    const tokenData = await tokenResponse.json();
+    if (tokenData.error) {
+      return res
+        .status(400)
+        .json({ error: `GitHub OAuth error: ${tokenData.error_description}` });
+    }
+
+    const access_token = tokenData.access_token;
+    if (!access_token) {
+      return res
+        .status(400)
+        .json({ error: "Failed to obtain GitHub access token." });
+    }
+
+    // 🔥 Fetch GitHub user details
+    const githubUserResponse = await fetch("https://api.github.com/user", {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+
+    const githubUser = await githubUserResponse.json();
+    if (!githubUser.login) {
+      return res
+        .status(400)
+        .json({ error: "Failed to retrieve GitHub user data." });
+    }
+
+    // 🔍 Check if username already exists
+    let user = await User.findOne({ username: githubUser.login });
+
+    if (!user) {
+      // 🛠️ Handle potential duplicate email conflict
+      const existingEmailUser = await User.findOne({ email: githubUser.email });
+      if (existingEmailUser) {
+        return res
+          .status(409)
+          .json({ error: "An account with this email already exists." });
+      }
+
+      // ✅ Use `findOneAndUpdate` to prevent duplicate errors
+      user = await User.findOneAndUpdate(
+        { username: githubUser.login },
+        {
+          $setOnInsert: {
+            name: githubUser.name || githubUser.login,
+            email: githubUser.email || `${githubUser.login}@github.com`,
+            password: null, // No password needed for OAuth users
+            userType: "github",
+          },
+        },
+        { upsert: true, new: true }
+      );
+    }
+
+    // ✅ Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id, userType: user.userType },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.status(200).json({ message: "GitHub login successful!", token, user });
+  } catch (error) {
+    console.error("GitHub OAuth callback error:", error);
+    res.status(500).json({ error: "Internal server error." });
+  }
+};
+
+/* ===========================
  * GET ALL USERS (Admin Only)
  * =========================== */
 const getAllUsers = async (req, res) => {
   try {
-    // You might want to handle authorization through middleware before this function
-    // For now, this inline check remains for clarity
     if (req.user.userType !== "admin") {
       return res
         .status(403)
         .json({ error: "Unauthorized: Only admins can view all users." });
     }
 
-    const users = await User.find().select("-password"); // Exclude password from results
+    const users = await User.find();
     res.status(200).json(users);
   } catch (error) {
     console.error("Error retrieving users:", error);
@@ -124,13 +216,6 @@ const updateUser = async (req, res) => {
   try {
     const { userId, userType } = req.user;
 
-    // Prevent non-admins from changing their own userType
-    if (userType !== "admin" && req.body.userType) {
-      // You can either throw an error or just remove the userType from the update body
-      delete req.body.userType;
-      // return res.status(403).json({ error: "Unauthorized: Cannot change user type." });
-    }
-
     if (
       userType !== "admin" &&
       userId.toString() !== req.params.id.toString()
@@ -138,6 +223,10 @@ const updateUser = async (req, res) => {
       return res.status(403).json({
         error: "Unauthorized: You can only edit your own account details.",
       });
+    }
+
+    if (userType !== "admin" && req.body.userType) {
+      delete req.body.userType;
     }
 
     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
@@ -167,7 +256,7 @@ const deleteUser = async (req, res) => {
     const userId = req.params.id;
     const requestingUser = req.user;
 
-    // Ensure only the user or an admin can delete the account
+    // ✅ Ensure only the user or an admin can delete the account
     if (
       requestingUser.userType !== "admin" &&
       requestingUser._id.toString() !== userId.toString()
@@ -180,16 +269,15 @@ const deleteUser = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found." });
 
-    // Cascade deletion logic based on user type
     if (user.userType === "employer") {
       await Employer.findOneAndDelete({ userId });
-      await Job.deleteMany({ employer: userId }); // Delete all jobs created by the employer
+      await Job.deleteMany({ employer: userId });
     } else if (user.userType === "applicant" || user.userType === "github") {
       await Applicant.findOneAndDelete({ userId });
-      await Application.deleteMany({ applicantId: userId }); // Delete all applications by the user
+      await Application.deleteMany({ applicantId: userId });
     }
 
-    // Finally, delete the user itself
+    // ✅ Finally, delete the user itself
     await User.findByIdAndDelete(userId);
 
     res
@@ -204,10 +292,10 @@ const deleteUser = async (req, res) => {
 module.exports = {
   createUser,
   loginUser,
-  // Removed githubOAuthLogin and githubOAuthCallback from exports
+  githubOAuthLogin,
+  githubOAuthCallback,
   getAllUsers,
   getUserById,
   updateUser,
   deleteUser,
-  generateJwtToken, // Exported for use in auth.js callback
 };

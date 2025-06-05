@@ -7,14 +7,35 @@ const {
   authorizeEmployer,
 } = require("../utilities/middleware");
 
-/* #swagger.tags = ['Applications'] */
-/* #swagger.description = 'Routes for job applications and tracking' */
+/**
+ * @swagger
+ * tags:
+ *   - name: Applications
+ *     description: Routes for job applications and tracking
+ */
 
-/* =========================== */
-/* APPLY FOR A JOB (Applicants & GitHub Users) */
-/* =========================== */
-/* #swagger.tags = ['Applications']
-   #swagger.description = 'Apply for a job by providing the Job ID' */
+/**
+ * @swagger
+ * /applications/apply/{jobId}:
+ *   post:
+ *     summary: Apply for a job
+ *     tags: [Applications]
+ *     description: Allows authenticated applicants to apply for a job using the job ID
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: jobId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Job ID to apply for
+ *     responses:
+ *       201:
+ *         description: Job application submitted successfully
+ *       400:
+ *         description: Invalid request or missing required fields
+ */
 router.post(
   "/apply/:jobId",
   authenticateUser,
@@ -22,11 +43,21 @@ router.post(
   applicationController.applyForJob
 );
 
-/* =========================== */
-/* GET APPLICATION STATUS (Applicants & GitHub Users) */
-/* =========================== */
-/* #swagger.tags = ['Applications']
-   #swagger.description = 'Retrieve the status of job applications' */
+/**
+ * @swagger
+ * /applications/status:
+ *   get:
+ *     summary: Retrieve job application status
+ *     tags: [Applications]
+ *     description: Fetches the application status for the authenticated user
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved application status
+ *       404:
+ *         description: No applications found
+ */
 router.get(
   "/status",
   authenticateUser,
@@ -34,37 +65,81 @@ router.get(
   applicationController.getApplicationStatus
 );
 
-/* =========================== */
-/* GET USER APPLICATIONS (Applicants & GitHub Users) */
-/* =========================== */
-/* #swagger.tags = ['Applications']
-   #swagger.description = 'Retrieve job applications submitted by the user' */
+/**
+ * @swagger
+ * /applications/user:
+ *   get:
+ *     summary: Retrieve applications submitted by a user
+ *     tags: [Applications]
+ *     description: Allows applicants to view their submitted job applications
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved user applications
+ *       404:
+ *         description: No applications found for user
+ */
 router.get(
-  "/user/applications",
+  "/user",
   authenticateUser,
   authorizeApplicant,
   applicationController.getUserApplications
 );
 
-/* =========================== */
-/* GET APPLICATIONS FOR A JOB (Employers Only) */
-/* =========================== */
-/* #swagger.tags = ['Applications']
-   #swagger.description = 'Retrieve job applications for a specific job posting' */
+/**
+ * @swagger
+ * /applications/job/{jobId}:
+ *   get:
+ *     summary: Retrieve applications for a specific job
+ *     tags: [Applications]
+ *     description: Allows employers to view job applications for their postings
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: jobId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Job ID
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved job applications
+ *       404:
+ *         description: No applications found for this job
+ */
 router.get(
-  "/job/:jobId/applications",
+  "/job/:jobId",
   authenticateUser,
   authorizeEmployer,
   applicationController.getJobApplications
 );
 
-/* =========================== */
-/* UPDATE APPLICATION STATUS (Employers Only) */
-/* =========================== */
-/* #swagger.tags = ['Applications']
-   #swagger.description = 'Update the status of a job application' */
+/**
+ * @swagger
+ * /applications/{appId}/status:
+ *   put:
+ *     summary: Update job application status
+ *     tags: [Applications]
+ *     description: Allows employers to update the status of a job application
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - name: appId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Application ID
+ *     responses:
+ *       200:
+ *         description: Successfully updated application status
+ *       400:
+ *         description: Invalid request or missing required fields
+ */
 router.put(
-  "/application/:appId/status",
+  "/:appId/status",
   authenticateUser,
   authorizeEmployer,
   applicationController.updateApplicationStatus
