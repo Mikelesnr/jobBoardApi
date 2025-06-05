@@ -7,14 +7,7 @@ const {
   authorizeEmployer,
 } = require("../utilities/middleware");
 
-/* #swagger.tags = ['Applications'] */
-/* #swagger.description = 'Routes for job applications and tracking' */
-
-/* =========================== */
-/* APPLY FOR A JOB (Applicants & GitHub Users) */
-/* =========================== */
-/* #swagger.tags = ['Applications']
-   #swagger.description = 'Apply for a job by providing the Job ID' */
+// APPLY FOR A JOB (Applicants & GitHub Users)
 router.post(
   "/apply/:jobId",
   authenticateUser,
@@ -22,11 +15,7 @@ router.post(
   applicationController.applyForJob
 );
 
-/* =========================== */
-/* GET APPLICATION STATUS (Applicants & GitHub Users) */
-/* =========================== */
-/* #swagger.tags = ['Applications']
-   #swagger.description = 'Retrieve the status of job applications' */
+// GET APPLICATION STATUS (Applicants & GitHub Users)
 router.get(
   "/status",
   authenticateUser,
@@ -34,11 +23,7 @@ router.get(
   applicationController.getApplicationStatus
 );
 
-/* =========================== */
-/* GET USER APPLICATIONS (Applicants & GitHub Users) */
-/* =========================== */
-/* #swagger.tags = ['Applications']
-   #swagger.description = 'Retrieve job applications submitted by the user' */
+// GET USER APPLICATIONS (Applicants & GitHub Users)
 router.get(
   "/user/applications",
   authenticateUser,
@@ -46,11 +31,7 @@ router.get(
   applicationController.getUserApplications
 );
 
-/* =========================== */
-/* GET APPLICATIONS FOR A JOB (Employers Only) */
-/* =========================== */
-/* #swagger.tags = ['Applications']
-   #swagger.description = 'Retrieve job applications for a specific job posting' */
+// GET APPLICATIONS FOR A JOB (Employers Only)
 router.get(
   "/job/:jobId/applications",
   authenticateUser,
@@ -58,11 +39,7 @@ router.get(
   applicationController.getJobApplications
 );
 
-/* =========================== */
-/* UPDATE APPLICATION STATUS (Employers Only) */
-/* =========================== */
-/* #swagger.tags = ['Applications']
-   #swagger.description = 'Update the status of a job application' */
+// UPDATE APPLICATION STATUS (Employers Only)
 router.put(
   "/application/:appId/status",
   authenticateUser,

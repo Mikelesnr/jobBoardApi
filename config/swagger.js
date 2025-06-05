@@ -8,32 +8,32 @@ const doc = {
   },
   host: process.env.SERVER_URL?.replace(/^https?:\/\//, ""),
   schemes: [process.env.PROTOCOL || "http"],
-  tags: [
-    {
-      name: "Applicants",
-      description: "Endpoints related to Applicants",
-    },
-    {
-      name: "Applications",
-      description: "Endpoints related to Applications",
-    },
-    {
-      name: "General",
-      description: "Endpoints related to General functionality",
-    },
-    {
-      name: "Authentication",
-      description: "Endpoints related to user authentication",
-    },
-    {
-      name: "Employers",
-      description: "Endpoints related to Employers",
-    },
-    {
-      name: "Jobs",
-      description: "Endpoints related to Jobs",
-    },
-  ],
+  // tags: [
+  //   {
+  //     name: "Applicants",
+  //     description: "Endpoints related to Applicants",
+  //   },
+  //   {
+  //     name: "Applications",
+  //     description: "Endpoints related to Applications",
+  //   },
+  //   {
+  //     name: "General",
+  //     description: "Endpoints related to General functionality",
+  //   },
+  //   {
+  //     name: "Authentication",
+  //     description: "Endpoints related to user authentication",
+  //   },
+  //   {
+  //     name: "Employers",
+  //     description: "Endpoints related to Employers",
+  //   },
+  //   {
+  //     name: "Jobs",
+  //     description: "Endpoints related to Jobs",
+  //   },
+  // ],
   securityDefinitions: {
     githubOAuth: {
       type: "oauth2",
