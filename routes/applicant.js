@@ -12,6 +12,13 @@ const {
   authorizeEmployer,
 } = require("../utilities/middleware");
 
+/**
+ * @swagger
+ * tags:
+ *   - name: Applicants
+ *     description: Routes for applicant profiles and management
+ */
+
 /* =========================== */
 /* APPLICANT ROUTES */
 /* =========================== */
