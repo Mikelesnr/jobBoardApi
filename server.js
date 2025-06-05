@@ -6,8 +6,7 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerFile = require("./config/swagger.json");
 const { requestLogger, errorHandler } = require("./utilities/middleware"); // ✅ Import middleware
 const session = require("express-session"); // <--- ADD THIS LINE FOR SESSIONS
-const passport = require("./config/passport"); // <--- ADD THIS LINE TO LOAD YOUR PASSPORT CONFIG
-
+const passport = require("./config/passport");
 /* =========================== */
 /* 📌 Database Connection */
 /* =========================== */
