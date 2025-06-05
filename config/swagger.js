@@ -6,8 +6,8 @@ const doc = {
     title: "Job Listing API",
     description: "API documentation for job postings and applications",
   },
-  host: process.env.SERVER_URL?.replace(/^https?:\/\//, ""),
-  schemes: [process.env.PROTOCOL || "http"],
+  host: process.env.SERVER_URL?.replace(/^https?:\/\//, ""), // Ensure host is clean
+  schemes: [process.env.PROTOCOL || "http"], // Use environment variable for protocol or default to http
   // tags: [
   //   {
   //     name: "Applicants",
@@ -35,22 +35,29 @@ const doc = {
   //   },
   // ],
   securityDefinitions: {
+    bearerAuth: {
+      // Adding a bearer token definition for JWT authentication
+      type: "apiKey",
+      name: "Authorization",
+      in: "header",
+      description: "Enter your JWT token in the format 'Bearer YOUR_TOKEN'",
+    },
     githubOAuth: {
       type: "oauth2",
       authorizationUrl: "https://github.com/login/oauth/authorize",
       tokenUrl: "https://github.com/login/oauth/access_token",
       flow: "accessCode",
       scopes: {
-        user: "Access user information",
+        "user:email":
+          "Access user's primary email address and basic profile information", // More precise scope
       },
     },
   },
 };
 
 const outputFile = "./config/swagger.json";
-const endpointsFiles = ["../routes/index.js"]; // This allows Swagger to auto-detect all routes
+const endpointsFiles = ["./routes/index.js"];
 
 swaggerAutogen(outputFile, endpointsFiles, doc).then(() => {
   console.log("✅ Swagger documentation generated successfully!");
-  process.exit(0);
 });

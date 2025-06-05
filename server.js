@@ -5,6 +5,8 @@ const cors = require("cors"); // ✅ Import CORS middleware
 const swaggerUi = require("swagger-ui-express");
 const swaggerFile = require("./config/swagger.json");
 const { requestLogger, errorHandler } = require("./utilities/middleware"); // ✅ Import middleware
+const session = require("express-session"); // <--- ADD THIS LINE FOR SESSIONS
+const passport = require("./config/passport"); // <--- ADD THIS LINE TO LOAD YOUR PASSPORT CONFIG
 
 /* =========================== */
 /* 📌 Database Connection */
@@ -39,6 +41,19 @@ app.use((req, res, next) => {
 app.use(requestLogger); // ✅ Log requests
 app.use(express.json()); // ✅ Parse JSON requests
 
+// Passport and Session Middleware - MUST BE PLACED AFTER express.json()
+// and BEFORE your routes that use Passport.
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET, // <--- Define SESSION_SECRET in your .env file!
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: process.env.NODE_ENV === "production" }, // Use secure cookies in production
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session()); // Required because you have serializeUser/deserializeUser in passport.js
+
 /* =========================== */
 /* 📌 Connect to MongoDB */
 /* =========================== */
@@ -56,6 +71,7 @@ app.use("/", require("./routes/index")); // ✅ Import and use routes
 /* =========================== */
 const port = process.env.PORT || 3000;
 const serverUrl = process.env.SERVER_URL || `http://localhost:${port}`;
+
 /* =========================== */
 /* 📌 Swagger API Documentation */
 /* =========================== */
@@ -69,10 +85,10 @@ app.use(
       oauth2RedirectUrl: `${serverUrl}/oauth-callback`, // Ensure callback is correct
     },
     oauth: {
-      clientId: process.env.CLIENT_ID,
+      clientId: process.env.GITHUB_CLIENT_ID, // Use GITHUB_CLIENT_ID here
       appName: "Job Listing API",
       scopeSeparator: ",",
-      scopes: ["user"],
+      scopes: ["user:email"], // Align with your passport strategy
     },
   })
 );
