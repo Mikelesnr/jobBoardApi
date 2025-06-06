@@ -259,7 +259,7 @@ const deleteUser = async (req, res) => {
     // ✅ Ensure only the user or an admin can delete the account
     if (
       requestingUser.userType !== "admin" &&
-      requestingUser._id.toString() !== userId.toString()
+      requestingUser.userId.toString() !== userId.toString()
     ) {
       return res
         .status(403)
