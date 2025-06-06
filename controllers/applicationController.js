@@ -1,15 +1,30 @@
 const asyncHandler = require("express-async-handler");
 const Application = require("../models/application");
+const Applicant = require("../models/applicant");
+const Job = require("../models/job");
 
 /* =========================== */
 /* APPLY FOR A JOB (Applicants & GitHub Users) */
 /* =========================== */
 const applyForJob = asyncHandler(async (req, res) => {
   try {
-    const { jobId } = req.params;
+    const { jobId } = req.body;
 
+    // Verify that the job exists
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return res.status(404).json({ error: "Job not found." });
+    }
+
+    // Find the applicant profile using the authenticated user's ID
+    const applicant = await Applicant.findOne({ userId: req.user.userId });
+    if (!applicant) {
+      return res.status(404).json({ error: "Applicant profile not found." });
+    }
+
+    // Create the new application using the applicantId from the profile
     const newApplication = new Application({
-      applicantId: req.user._id,
+      applicantId: applicant._id,
       jobId,
       status: "Pending",
     });
@@ -30,15 +45,30 @@ const applyForJob = asyncHandler(async (req, res) => {
 /* =========================== */
 const getApplicationStatus = asyncHandler(async (req, res) => {
   try {
-    const applications = await Application.find({
-      applicantId: req.user._id,
-    }).populate("jobId");
+    const { jobId } = req.params; // Extract jobId from request body
 
-    if (!applications.length) {
-      return res.status(404).json({ error: "No applications found." });
+    if (!jobId) {
+      return res.status(400).json({ error: "Job ID is required." });
     }
 
-    res.status(200).json(applications);
+    // Find the applicant profile using the authenticated user's userId
+    const applicant = await Applicant.findOne({ userId: req.user.userId });
+
+    if (!applicant) {
+      return res.status(404).json({ error: "Applicant profile not found." });
+    }
+
+    // Filter applications by the applicantId and the provided jobId
+    const applications = await Application.find({
+      applicantId: applicant._id,
+      jobId: jobId, // Filtering by jobId
+    });
+
+    if (!applications.length) {
+      return res.status(404).json({ error: "You did not apply for this job." });
+    }
+
+    res.status(200).json({ status: applications[0].status }); // Return the first application found
   } catch (error) {
     console.error("Error fetching application status:", error);
     res.status(500).json({ error: "Internal server error." });
@@ -82,8 +112,16 @@ const updateApplicationStatus = asyncHandler(async (req, res) => {
 /* =========================== */
 const getUserApplications = asyncHandler(async (req, res) => {
   try {
+    // Find the applicant profile using the authenticated user's userId
+    const applicant = await Applicant.findOne({ userId: req.user.userId });
+
+    if (!applicant) {
+      return res.status(404).json({ error: "Applicant profile not found." });
+    }
+
+    // Use applicant._id instead of req.user._id
     const applications = await Application.find({
-      applicantId: req.user._id,
+      applicantId: applicant._id,
     }).populate("jobId");
 
     if (!applications.length) {
@@ -92,7 +130,7 @@ const getUserApplications = asyncHandler(async (req, res) => {
 
     res.status(200).json(applications);
   } catch (error) {
-    console.error("Error fetching user applications:", error);
+    console.error("Error fetching application status:", error);
     res.status(500).json({ error: "Internal server error." });
   }
 });

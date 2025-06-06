@@ -21,18 +21,56 @@ const {
 
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     Applicant:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         email:
+ *           type: string
+ *           format: email
+ *         skills:
+ *           type: array
+ *           items:
+ *             type: string
+ *         experience:
+ *           type: string
+ *         resumeUrl:
+ *           type: string
+ */
+
+/**
+ * @swagger
  * /applicants/profile:
  *   post:
  *     summary: Create an applicant profile
  *     tags: [Applicants]
- *     description: Allows authenticated applicants to create a profile
+ *     description: Allows authenticated applicants to create a profile.
  *     security:
  *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: "#/components/schemas/Applicant"
+ *           example:
+ *             skills: ["JavaScript", "React", "Node.js"]
+ *             experience: "5 years in software development"
+ *             resumeUrl: "https://example.com/resume.pdf"
  *     responses:
  *       201:
- *         description: Applicant profile created successfully
+ *         description: Applicant profile created successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Applicant"
  *       400:
- *         description: Invalid request or missing required fields
+ *         description: Invalid request or missing required fields.
  */
 router.post(
   "/profile",
@@ -47,14 +85,18 @@ router.post(
  *   get:
  *     summary: Retrieve applicant profile
  *     tags: [Applicants]
- *     description: Fetches the authenticated user's applicant profile
+ *     description: Fetches the authenticated user's applicant profile.
  *     security:
  *       - BearerAuth: []
  *     responses:
  *       200:
- *         description: Successfully retrieved applicant profile
+ *         description: Successfully retrieved applicant profile.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Applicant"
  *       404:
- *         description: Applicant profile not found
+ *         description: Applicant profile not found.
  */
 router.get(
   "/profile",
@@ -69,7 +111,7 @@ router.get(
  *   get:
  *     summary: Retrieve an applicant profile by ID
  *     tags: [Applicants]
- *     description: Allows employers or admins to fetch a specific applicant profile
+ *     description: Allows employers or admins to fetch a specific applicant profile.
  *     security:
  *       - BearerAuth: []
  *     parameters:
@@ -78,26 +120,18 @@ router.get(
  *         required: true
  *         schema:
  *           type: string
- *         description: Applicant ID
+ *         description: Applicant ID.
  *     responses:
  *       200:
- *         description: Successfully retrieved applicant profile
+ *         description: Successfully retrieved applicant profile.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Applicant"
  *       404:
- *         description: Applicant profile not found
+ *         description: Applicant profile not found.
  */
-router.get(
-  "/profile/:id",
-  authenticateUser,
-  (req, res, next) => {
-    // Ensure either admin or employer authorization is applied
-    if (authorizeAdmin(req, res, next) || authorizeEmployer(req, res, next)) {
-      next();
-    } else {
-      res.status(403).json({ error: "Unauthorized access" });
-    }
-  },
-  getApplicantProfile
-);
+router.get("/profile/:id", authenticateUser, getApplicantProfile);
 
 /**
  * @swagger
@@ -105,20 +139,29 @@ router.get(
  *   put:
  *     summary: Update applicant profile
  *     tags: [Applicants]
- *     description: Allows applicants or admins to update the applicant profile
+ *     description: Allows applicants or admins to update the applicant profile.
  *     security:
  *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: "#/components/schemas/Applicant"
+ *           example:
+ *             skills: ["Python", "Django", "PostgreSQL"]
+ *             experience: "7 years in backend development"
+ *             resumeUrl: "https://example.com/new_resume.pdf"
  *     responses:
  *       200:
- *         description: Profile updated successfully
+ *         description: Profile updated successfully.
  *       400:
- *         description: Invalid request or missing required fields
+ *         description: Invalid request or missing required fields.
  */
 router.put(
   "/profile",
   authenticateUser,
   (req, res, next) => {
-    // Ensure either applicant or admin authorization is applied
     if (authorizeApplicant(req, res, next) || authorizeAdmin(req, res, next)) {
       next();
     } else {

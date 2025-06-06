@@ -18,8 +18,18 @@ const options = {
         } Server`,
       },
     ],
+    components: {
+      securitySchemes: {
+        BearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
+    security: [{ BearerAuth: [] }],
   },
-  apis: ["./routes/*.js", "./models/*.js"], // Load all route files with JSDoc annotations
+  apis: ["./controllers/*.js", "./routes/*.js", "./models/*.js"], // Load all route files with JSDoc annotations
 };
 
 const swaggerSpec = swaggerJsdoc(options);

@@ -129,7 +129,7 @@ router.post("/jobs", authenticateUser, authorizeEmployer, postJob);
 
 /**
  * @swagger
- * /employers/jobs/{jobId}/applications:
+ * /employers/applications/{jobId}:
  *   get:
  *     summary: Retrieve applications for a specific job posting
  *     tags: [Employers]
@@ -150,7 +150,7 @@ router.post("/jobs", authenticateUser, authorizeEmployer, postJob);
  *         description: No applications found for this job
  */
 router.get(
-  "/jobs/:jobId/applications",
+  "/applications/:jobId",
   authenticateUser,
   authorizeEmployer,
   getJobApplications
@@ -158,7 +158,7 @@ router.get(
 
 /**
  * @swagger
- * /employers/applications/{applicationId}/status:
+ * /employers/status/{applicationId}:
  *   put:
  *     summary: Update job application status
  *     tags: [Employers]
@@ -179,7 +179,7 @@ router.get(
  *         description: Invalid request or missing required fields
  */
 router.put(
-  "/applications/:applicationId/status",
+  "/status/:applicationId",
   authenticateUser,
   authorizeEmployer,
   updateApplicationStatus
