@@ -16,6 +16,7 @@ const buildHomePage = () => {
         <h1>Welcome to the Job Portal API 🚀</h1>
         <p>This is a REST API for job listings and applications.</p>
         <a href="/api-docs">📄 View API Documentation</a>
+        <a href="/auth/github">🔒 GitHub OAuth Login</a>
       </body>
     </html>
   `;
